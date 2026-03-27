@@ -1,7 +1,7 @@
 PROJECT: mini-grades
-AUTHOR: Efe Berke Ağlık (251478034)
-VERSION: v0
-DATE: 2026-03-14
+AUTHOR: berkevnl
+VERSION: v2
+DATE: 2026-03-26
 
 ========================================
 OVERVIEW
@@ -27,7 +27,6 @@ Output: "Student added successfully." or "Error: Student with ID <id> already ex
 --- add_grade ---
 Usage: User provides the Student ID and grade.
 Validates that the input is numeric and within 0-100.
-(v0 Note: Actual file persistence for grades will be added in v1).
 Output: "Grades added successfully for student <id>." or "Error: No student found with ID <id>."
 
 --- delete_student ---
@@ -37,20 +36,29 @@ Output: "Student and all grades deleted successfully." or "Error: No student fou
 
 --- calculate_average ---
 Usage: User provides the ID of the student.
-Output: Displays "Average calculation will be implemented in future weeks." or "Error: No student found with ID <id>."
+Output: Displays "Average for student <id> is <average>." or "Error: No student found with ID <id>."
 
 --- list_students ---
 Usage: Select "list" command.
-Displays all students currently in the system from data.txt.
-Output: A list showing "ID | Name" or "Error: No students found in the system. Operation aborted."
+Displays a detailed report for each student, including ID, Name, Grades, and Average calculation.
+Output: A list showing "ID | Name | Grades | Average" or "Error: No students found in the system. Operation aborted."
 
 --- generate_report ---
 Usage: Select "report" command.
 Saves all current records into .minigrades/report.txt with a header.
 Output: "Report saved to .minigrades/report.txt" or "Error: No data available to generate a report."
 
+--- delete_grade ---
+Usage: User provides the ID of the student and the grade to be deleted.
+Output: "Grade <grade> successfully removed!" or "Error: No student found with ID <id>."
+
+--- change_grades ---
+Usage: User provides the ID of the student, old grade and new grade.
+Output: "Grade <old_grade> changed to <new_grade> for student <id>."
+This function will be implemented in future weeks.
+
 ========================================
-DATA FORMAT (v0)
+DATA FORMAT (v2)
 ========================================
 
 File: .minigrades/report.txt
@@ -58,10 +66,10 @@ Format: One student per line, fields separated by |
 (Note: Grades and Average columns are placeholders in this version)
 
 Example: 
-ID | NAME
------------
-101 | Berke
-102 | Efe
+ID  | NAME  | GRADES
+-------------------
+101 | Berke | 85
+102 | Efe   | 90
 
 ========================================
 ERROR HANDLING
@@ -74,3 +82,5 @@ ERROR HANDLING
 - Empty database: "Error: No students found in the system. Operation aborted."
 - Grade range error: "Invalid grade: Grades must be between 0 and 100."
 - No path exists: "Not initialized. Run: python solution.py init"
+- Grade not found: "Error: Grade <target_grade> not found for this student."
+- Average could not calculate: "Error: Could not calculate average for student <id>."
