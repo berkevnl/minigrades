@@ -1,24 +1,34 @@
-# Mini-Grades (v1)
+# Mini-Grades (v2)
 
-`mini-grades` is a robust Command-Line Interface (CLI) tool designed for managing student records and academic performance. This project goes beyond basic functionality, emphasizing **Defensive Programming**, **Unit Testing**, and **Persistent Data Structuring** using low-level file I/O operations.
+`mini-grades` is a robust Command-Line Interface (CLI) tool designed for managing student records and academic performance. After a successful v1 release focusing on core architecture, **v2** introduces dynamic data processing and iterative logic.
 
 ---
 
-## 🚀 Key Features (v1)
-* **CLI Architecture:** Operates through parametric commands (`init`, `add`, `list`, etc.) for a streamlined user experience.
-* **Data Persistence:** Records are stored locally within a structured `.minigrades/` directory to ensure data integrity across sessions.
-* **Advanced Error Handling:** Comprehensive validation for non-numeric inputs, duplicate IDs, and uninitialized system states.
-* **TDD (Test-Driven Development):** Fully verified with a custom suite of 15 `pytest` scenarios (**100% Pass Rate**).
-* **Professional Reporting:** Generates human-readable, formatted tables in `report.txt`.
+## 🚀 Key Features (v2)
+* **Dynamic Data Handling:** Transitioned from manual string indexing to iterative processing using **loops**.
+* **Functional CRUD Operations:** v2 now supports **actual deletion** by rewriting file streams without the targeted ID.
+* **Persistent Grade Management:** Grades are now processed and appended to student records persistently.
+* **Mathematical Processing:** Implemented logic to parse string-based grades into numerical values for real-time calculation.
+* **Enhanced CLI Output:** Optimized formatting for student listings and reporting.
+
+---
+
+## 📜 CHANGELOG
+
+### [v1.0] -> [v2.0]
+- **From Simulation to Reality:** Replaced placeholder messages in `delete` and `calc-avg` with functional algorithms.
+- **Iteration Implementation:** Integrated **for/while loops** to process `data.txt` line-by-line.
+- **Data Structure Shift:** Adopted **Python Lists** to temporarily hold and filter records during file updates.
+- **Improved Pattern Matching:** Refined ID detection to ensure 100% accuracy during deletion and grade appending.
 
 ---
 
 ## 🛠️ Technical Foundation
-Developed with intentional constraints to master the core building blocks of software engineering without relying on high-level data structures (loops/lists) in this version:
+While v1 was built with intentional constraints, **v2** leverages high-level logic to manage data more efficiently:
 * **Language:** Python 3.13.2
-* **File Management:** Direct stream manipulation using `os` and `sys` modules.
-* **Pattern Matching:** Implemented a custom separator pattern (`ID | Name`) to ensure unique ID identification and prevent data collision.
-* **Validation:** Automated functional verification via `pytest`.
+* **Logic:** Iterative processing (Loops) and dynamic storage (Lists).
+* **File Management:** Advanced stream manipulation using the `with open()` pattern for safer I/O operations.
+* **Validation:** Updated `pytest` suite to cover iterative edge cases.
 
 ---
 
@@ -31,13 +41,14 @@ python solution.py init
 # 2. Add a student
 python solution.py add 101 Berke
 
-# 3. List all students
+# 3. Add grades
+python solution.py add-grade 101 85
+
+# 4. Calculate average
+python solution.py calc-avg 101
+
+# 5. List all students
 python solution.py list
 
-# 4. Run automated tests
+# 5. Run automated tests
 pytest test.py
-```
----
-Author: berkevnl
-
-Version: v1.0
