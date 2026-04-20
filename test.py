@@ -1,6 +1,6 @@
 """
 SPECS test scenarios
-Project: mini-grades (v2)
+Project: mini-grades (v3)
 """
 
 import subprocess
@@ -71,12 +71,12 @@ def test_add_grade_out_of_range():
 def test_delete_student_success():
     """Tests the deletion of an existing student via their ID."""
     run_cmd(["add", "101", "Berke"])
-    response = run_cmd(["delete", "101"])
+    response = run_cmd(["delete-student", "101"])
     assert response == "Student and all grades deleted successfully."
 
 def test_delete_student_not_found():
     """Tests the error message when attempting to delete a non-existent ID."""
-    response = run_cmd(["delete", "999"])
+    response = run_cmd(["delete-student", "999"])
     assert response == "Error: No student found with ID 999."
 
 # --- delete grade tests ---
@@ -84,40 +84,40 @@ def test_delete_grade_success():
     """Tests the deletion of an existing grade for student via their ID."""
     run_cmd(["add", "101", "Berke"])
     run_cmd(["add-grade", "101", "85"])
-    response = run_cmd(["del-grade", "101", "85"])
+    response = run_cmd(["delete-grade", "101", "85"])
     assert response == "Grade 85 successfully removed!"
 
 def test_delete_grade_non_numeric_id():
     """Tests that the added grade must consist of numbers."""
     run_cmd(["add", "101", "Berke"])
     run_cmd(["add-grade", "101", "85"])
-    response = run_cmd(["del-grade", "abc", "85"])
+    response = run_cmd(["delete-grade", "abc", "85"])
     assert response == "Invalid input: Please enter a numeric value."
 
 def test_delete_grade_non_numeric_grade():
     """Tests that the added grade must consist of numbers."""
     run_cmd(["add", "101", "Berke"])
     run_cmd(["add-grade", "101", "85"])
-    response = run_cmd(["del-grade", "101", "abc"])
+    response = run_cmd(["delete-grade", "101", "abc"])
     assert response == "Invalid input: Please enter a numeric value."
 
 def test_delete_grade_out_of_range():
     """Tests that the added grade must be between 0 and 100."""
     run_cmd(["add", "101", "Berke"])
     run_cmd(["add-grade", "101", "85"])
-    response = run_cmd(["del-grade", "101", "101"])
+    response = run_cmd(["delete-grade", "101", "101"])
     assert response == "Invalid grade: Grades must be between 0 and 100."
 
 def test_delete_grade_student_not_found():
     """Tests the error when trying to delete a grade from a student ID that does not exist."""
-    response = run_cmd(["del-grade", "999", "85"])
+    response = run_cmd(["delete-grade", "999", "85"])
     assert response == "Error: No student found with ID 999."
 
 def test_delete_grade_not_found():
     """Tests the error when trying to delete a grade that does not exist."""
     run_cmd(["add", "101", "Berke"])
     run_cmd(["add-grade", "101", "85"])
-    response = run_cmd(["del-grade", "101", "90"])
+    response = run_cmd(["delete-grade", "101", "90"])
     assert response == "Error: Grade 90 not found for this student."
 
 # --- calculate average tests ---
@@ -198,13 +198,113 @@ def test_generate_report_success():
     run_cmd(["add", "101", "Berke"])
     run_cmd(["add", "102", "Efe"])
     response = run_cmd(["report"])
-    assert response == "Report saved to .minigrades/report.txt"
+    assert response == "Report saved to .minigrades\\report.txt"
     assert os.path.exists(".minigrades/report.txt")
 
 def test_generate_report_empty():
     """Tests the error when report generation is requested with no registered students."""
     response = run_cmd(["report"])
     assert response == "Error: No data available to generate a report."
+
+# --- change grade tests ---
+def test_change_grade_success():
+    """Tests the successful change of an existing grade for a student."""
+    run_cmd(["add", "101", "Berke"])
+    run_cmd(["add-grade", "101", "85"])
+    response = run_cmd(["change-grade", "101", "85", "90"])
+    assert response == "Grade 85 changed to 90 for student 101 successfully!"
+
+def test_change_grade_non_numeric_id():
+    """Tests the error when a non-numeric ID is provided for grade change."""
+    run_cmd(["add", "101", "Berke"])
+    run_cmd(["add-grade", "101", "85"])
+    response = run_cmd(["change-grade", "abc", "85", "90"])
+    assert response == "Invalid input: Please enter a numeric value."
+
+def test_change_grade_non_numeric_old_grade():
+    """Tests the error when a non-numeric old grade is provided for grade change."""
+    run_cmd(["add", "101", "Berke"])
+    run_cmd(["add-grade", "101", "85"])
+    response = run_cmd(["change-grade", "101", "abc", "90"])
+    assert response == "Invalid input: Please enter a numeric value."
+
+def test_change_grade_non_numeric_new_grade():
+    """Tests the error when a non-numeric new grade is provided for grade change."""
+    run_cmd(["add", "101", "Berke"])
+    run_cmd(["add-grade", "101", "85"])
+    response = run_cmd(["change-grade", "101", "85", "abc"])
+    assert response == "Invalid input: Please enter a numeric value."
+
+def test_change_old_grade_out_of_range():
+    """Tests the error when an old grade is provided outside the valid range."""
+    run_cmd(["add", "101", "Berke"])
+    run_cmd(["add-grade", "101", "85"])
+    response = run_cmd(["change-grade", "101", "150", "90"])
+    assert response == "Invalid grade: Grades must be between 0 and 100."
+
+def test_change_new_grade_out_of_range():
+    """Tests the error when a new grade is provided outside the valid range."""
+    run_cmd(["add", "101", "Berke"])
+    run_cmd(["add-grade", "101", "85"])
+    response = run_cmd(["change-grade", "101", "85", "-10"])
+    assert response == "Invalid grade: Grades must be between 0 and 100."
+
+def test_change_grade_student_not_found():
+    """Tests the error when trying to change a grade for a student ID that does not exist."""
+    response = run_cmd(["change-grade", "999", "85", "90"])
+    assert response == "Error: No student found with ID 999."
+
+def test_change_grade_old_grade_not_found():
+    """Tests the error when trying to change a grade that does not exist for the student."""
+    run_cmd(["add", "101", "Berke"])
+    run_cmd(["add-grade", "101", "85"])
+    response = run_cmd(["change-grade", "101", "90", "95"])
+    assert response == "Error: Grade 90 not found for this student."
+
+# --- student info tests ---
+def test_student_info_success():
+    """Tests the successful retrieval of a student's information via their ID."""
+    run_cmd(["add", "101", "Berke"])
+    run_cmd(["add-grade", "101", "85"])
+    response = run_cmd(["student-info", "101"])
+    assert "=====================================\n" in response
+    assert "Information for student with ID 101:\n" in response
+    assert "=====================================\n" in response
+    assert "Name: Berke\n" in response
+    assert "Grades: 85\n" in response
+    assert "Average: Average for student 101 is 85.00.\n" in response
+    assert "=====================================\n" in response
+
+def test_student_info_no_grades():
+    """Tests the retrieval of a student's information when they have no grades registered."""
+    run_cmd(["add", "101", "Berke"])
+    response = run_cmd(["student-info", "101"])
+    assert "=====================================\n" in response
+    assert "Information for student with ID 101:\n" in response
+    assert "=====================================\n" in response
+    assert "Name: Berke\n" in response
+    assert "Grades: None\n" in response
+    assert "Error: Could not calculate average for student 101.\n" in response
+    assert "=====================================\n" in response
+
+def test_student_info_not_found():
+    """Tests the error when trying to retrieve information for a student ID that does not exist."""
+    response = run_cmd(["student-info", "999"])
+    assert response == "Error: No student found with ID 999."
+
+def test_student_info_non_numeric_id():
+    """Tests the error when a non-numeric ID is provided for student information retrieval."""
+    response = run_cmd(["student-info", "abc"])
+    assert response == "Invalid input: Please enter a numeric value."
+
+# --- check path test ---
+def check_path():
+    """Tests the error message when the system is not initialized and a command is entered."""
+    if os.path.exists(".minigrades"):
+        shutil.rmtree(".minigrades")
+    
+    response = run_cmd(["list"])
+    assert response == "Not initialized. Run: python solution.py init"
 
 # --- unknown command test ---
 def test_unknown_command():

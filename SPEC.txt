@@ -1,7 +1,7 @@
 PROJECT: mini-grades
 AUTHOR: berkevnl
-VERSION: v2
-DATE: 2026-03-26
+VERSION: v3
+DATE: 2026-04-20
 
 ========================================
 OVERVIEW
@@ -52,24 +52,31 @@ Output: "Report saved to .minigrades/report.txt" or "Error: No data available to
 Usage: User provides the ID of the student and the grade to be deleted.
 Output: "Grade <grade> successfully removed!" or "Error: No student found with ID <id>."
 
---- change_grades ---
+--- change_grade ---
 Usage: User provides the ID of the student, old grade and new grade.
 Output: "Grade <old_grade> changed to <new_grade> for student <id>."
-This function will be implemented in future weeks.
+
+--- student_info ---
+Usage: User provides the ID of the student.
+Output: Displays "ID: <id>, Name: <name>, Grades: <grades>, Average: <average>" or "Error: No student found with ID <id>."
+
+--- check_path ---
+Usage: Internal function to verify the existence of .minigrades/ directory and data.txt file.
+Output: If not exists, "Not initialized. Run: python solution.py init"
 
 ========================================
-DATA FORMAT (v2)
+DATA FORMAT (v3)
 ========================================
 
 File: .minigrades/report.txt
 Format: One student per line, fields separated by |
-(Note: Grades and Average columns are placeholders in this version)
 
 Example: 
-ID  | NAME  | GRADES
--------------------
-101 | Berke | 85
-102 | Efe   | 90
+ID         | NAME            | GRADES               | AVERAGE   
+----------------------------------------------------------------
+101        | Berke           | 60,80,100            | Average for student 101 is 80.00.
+102        | Eren            | 94                   | Average for student 102 is 94.00.
+103        | Murat           | None                 | Error: Could not calculate average for student 103.
 
 ========================================
 ERROR HANDLING
@@ -84,3 +91,5 @@ ERROR HANDLING
 - No path exists: "Not initialized. Run: python solution.py init"
 - Grade not found: "Error: Grade <target_grade> not found for this student."
 - Average could not calculate: "Error: Could not calculate average for student <id>."
+- Invalid name input: "Invalid input: Please enter a valid name consisting of letters only."
+- Report generation error: "Error: No data available to generate a report."
