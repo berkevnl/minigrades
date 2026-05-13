@@ -1,95 +1,434 @@
-PROJECT: mini-grades
-AUTHOR: berkevnl
-VERSION: v3
-DATE: 2026-04-20
+MiniGrades Specification
+Version: 4.0
+Command name: minigrades
+External libraries: colorama (for colored output)
+Standard library: Allowed
+Persistent storage: Local filesystem only
 
 ========================================
-OVERVIEW
+1. Overview
 ========================================
 
-mini-grades is a command-line student management
-and performance tracking tool.
-It focuses on maintaining student grades and persists
-all data in a structured local environment.
+MiniGrades is an advanced command-line student management
+and grade tracking tool. It uses strict determinism across
+all input/output pipelines and guarantees internal state
+integrity check for all transactions.
 
-All data is persisted in a directory called .minigrades/
-in the current working directory.
+The executable must be called:
 
-========================================
-FUNCTIONS
-========================================
+    python main.py
 
---- add_student ---
-Usage: User provides a Unique ID and a Name.
-Checks if the ID already exists in the system using the "ID |" pattern.
-Output: "Student added successfully." or "Error: Student with ID <id> already exists."
+All data must be stored in:
 
---- add_grade ---
-Usage: User provides the Student ID and grade.
-Validates that the input is numeric and within 0-100.
-Output: "Grades added successfully for student <id>." or "Error: No student found with ID <id>."
+    .minigrades/
 
---- delete_student ---
-Usage: User provides the ID of the student to be removed.
-Finds the student by ID using the "ID |" pattern.
-Output: "Student and all grades deleted successfully." or "Error: No student found with ID <id>."
+All commands operate relative to current directory.
 
---- calculate_average ---
-Usage: User provides the ID of the student.
-Output: Displays "Average for student <id> is <average>." or "Error: No student found with ID <id>."
+----------------------------------------
 
---- list_students ---
-Usage: Select "list" command.
-Displays a detailed report for each student, including ID, Name, Grades, and Average calculation.
-Output: A list showing "ID | Name | Grades | Average" or "Error: No students found in the system. Operation aborted."
+Supported commands:
 
---- generate_report ---
-Usage: Select "report" command.
-Saves all current records into .minigrades/report.txt with a header.
-Output: "Report saved to .minigrades/report.txt" or "Error: No data available to generate a report."
-
---- delete_grade ---
-Usage: User provides the ID of the student and the grade to be deleted.
-Output: "Grade <grade> successfully removed!" or "Error: No student found with ID <id>."
-
---- change_grade ---
-Usage: User provides the ID of the student, old grade and new grade.
-Output: "Grade <old_grade> changed to <new_grade> for student <id>."
-
---- student_info ---
-Usage: User provides the ID of the student.
-Output: Displays "ID: <id>, Name: <name>, Grades: <grades>, Average: <average>" or "Error: No student found with ID <id>."
-
---- check_path ---
-Usage: Internal function to verify the existence of .minigrades/ directory and data.txt file.
-Output: If not exists, "Not initialized. Run: python solution.py init"
+    python main.py init
+    python main.py add-student <id> <name>
+    python main.py add-grade <id> <lesson> <grade>
+    python main.py delete-grade <id> <lesson> <grade>
+    python main.py change-grade <id> <lesson> <old_grade> <new_grade>
+    python main.py delete-student <id>
+    python main.py list
+    python main.py report
+    python main.py student-info <id>
+    python main.py clear-data
+    python main.py clear-log
+    python main.py help
+    python main.py help <command>
 
 ========================================
-DATA FORMAT (v3)
+2. Data Storage & System Guard
 ========================================
 
-File: .minigrades/report.txt
-Format: One student per line, fields separated by |
+After init:
 
-Example: 
-ID         | NAME            | GRADES               | AVERAGE   
-----------------------------------------------------------------
-101        | Berke           | 60,80,100            | Average for student 101 is 80.00.
-102        | Eren            | 94                   | Average for student 102 is 94.00.
-103        | Murat           | None                 | Error: Could not calculate average for student 103.
+    .minigrades/
+        data.txt
+        log.txt
+
+data.txt:
+    One student per line.
+    Format: <id> | <name> | <Lesson1>: <g1>,<g2> | <Lesson2>: <g3>,...
+
+    Example:
+    101 | Berke | Math: 70,30 | Science: 85
+    102 | Efe
+
+    Each lesson segment uses the format "LessonName: grade1,grade2,...".
+    Lessons are separated by pipe (|) delimiters, same as id and name.
+    If a student has no grades, no lesson segments are present.
+
+log.txt:
+    Activity log file. Each operation is recorded with its status.
+    Created automatically on the first logged operation (append mode).
+    Format: <STATUS>: [<YYYY-MM-DD HH:MM:SS>] <message>
+
+    Example:
+    SUCCESS: [2026-05-07 00:30:00] Student 101 added successfully.
+    ERROR: [2026-05-07 00:30:05] Adding student failed: ID must be a numeric value.
+
+System Guard (check_path):
+    Except for 'python main.py init' and 'python main.py help',
+    EVERY command must execute a robust internal path/integrity
+    verification BEFORE attempting any other read/write.
+    It must check that:
+      1) The directory `.minigrades/` exists.
+
+    If this fails, print EXACTLY:
+    Not initialized. Run: python main.py init
+
+    And exit with code 1.
+
+report.md (generated by report command):
+    Markdown table format:
+
+    # MINI-GRADES STUDENT REPORT
+
+    | ID         | NAME            | LESSON     | GRADES   | AVERAGE    |
+    |------------|-----------------|------------|----------|------------|
+    | <id>       | <name>          | <lesson>   | <g1>,<g2>| <avg>      |
+
+    Each lesson for a student gets its own row.
+    The first row of a student displays ID and NAME; subsequent lesson
+    rows leave ID and NAME blank.
+    Note: All averages must have precisely 2 decimal places (e.g., 85.00).
 
 ========================================
-ERROR HANDLING
+3. Command Specifications
 ========================================
 
-- Invalid command: "Unknown command: <command>. Please select from the menu."
-- Duplicate ID: "Error: Student with ID <id> already exists."
-- Non-numeric input: "Invalid input: Please enter a numeric value."
-- Student not found: "Error: No student found with ID <id>."
-- Empty database: "Error: No students found in the system. Operation aborted."
-- Grade range error: "Invalid grade: Grades must be between 0 and 100."
-- No path exists: "Not initialized. Run: python solution.py init"
-- Grade not found: "Error: Grade <target_grade> not found for this student."
-- Average could not calculate: "Error: Could not calculate average for student <id>."
-- Invalid name input: "Invalid input: Please enter a valid name consisting of letters only."
-- Report generation error: "Error: No data available to generate a report."
+----------------------------------------
+3.1 init
+----------------------------------------
+
+Create .minigrades/ directory and empty data.txt file.
+
+If already exists (directory or data.txt):
+    print "Already initialized. No changes made."
+Exit 0.
+
+On success:
+    print "Initialized empty system in .minigrades/"
+Exit 0.
+
+----------------------------------------
+3.2 add-student <id> <name>
+----------------------------------------
+
+If not initialized (guard fails):
+    print "Not initialized. Run: python main.py init"
+    exit 1
+
+If id is not a positive integer:
+    print "Adding student failed: ID must be a numeric value."
+    exit 1
+
+If name contains non-alphabetic characters:
+    print "Adding student failed: name must contain only letters."
+    exit 1
+
+If student with id already exists:
+    print "Adding student failed: student with ID <id> already exists."
+    exit 1
+
+Add student to data.txt with no lesson segments.
+
+Print:
+    Student <id> added successfully.
+
+----------------------------------------
+3.3 add-grade <id> <lesson> <grade>
+----------------------------------------
+
+If not initialized:
+    print "Not initialized. Run: python main.py init"
+    exit 1
+
+If id or grade is not numeric:
+    print "Adding grade failed: ID and grade must be numeric values."
+    exit 1
+
+If lesson contains non-alphabetic characters:
+    print "Adding grade failed: lesson must contain only letters."
+    exit 1
+
+If grade < 0 or grade > 100:
+    print "Adding grade failed: grade must be between 0 and 100."
+    exit 1
+
+If student not found:
+    print "Adding grade failed: no student found with ID <id>."
+    exit 1
+
+Behavior:
+    - If the lesson already exists for the student, append the
+      grade to that lesson's grade list (comma-separated).
+    - If the lesson does not exist, add a new pipe-delimited
+      segment: "Lesson: grade".
+
+Print:
+    Lesson <lesson> and grade <grade> added for student <id>.
+
+----------------------------------------
+3.4 delete-grade <id> <lesson> <grade>
+----------------------------------------
+
+If not initialized:
+    print "Not initialized. Run: python main.py init"
+    exit 1
+
+If id or grade is not numeric:
+    print "Deleting grade failed: ID and grade must be numeric values."
+    exit 1
+
+If lesson contains non-alphabetic characters:
+    print "Deleting grade failed: lesson must contain only letters."
+    exit 1
+
+If grade < 0 or grade > 100:
+    print "Deleting grade failed: grade must be between 0 and 100."
+    exit 1
+
+If student not found:
+    print "Deleting grade failed: no student found with ID <id>."
+    exit 1
+
+If grade not in the specified lesson's grade list:
+    print "Deleting grade failed: grade <grade> in <lesson> not found for student <id>."
+    exit 1
+
+Remove the first occurrence of grade from the lesson's list.
+If the lesson has no grades left after removal, remove the
+entire lesson segment from the student line.
+
+Print:
+    Grade <grade> in lesson <lesson> removed for student <id>.
+
+----------------------------------------
+3.5 change-grade <id> <lesson> <old_grade> <new_grade>
+----------------------------------------
+
+If not initialized:
+    print "Not initialized. Run: python main.py init"
+    exit 1
+
+If lesson contains non-alphabetic characters:
+    print "Changing grade failed: lesson must contain only letters."
+    exit 1
+
+If id, old_grade, or new_grade are not numeric:
+    print "Changing grade failed: ID and grade must be numeric values."
+    exit 1
+
+If old_grade or new_grade < 0 or > 100:
+    print "Changing grade failed: grade must be between 0 and 100."
+    exit 1
+
+If student not found:
+    print "Changing grade failed: no student found with ID <id>."
+    exit 1
+
+If old_grade not in the specified lesson's grade list:
+    print "Changing grade failed: grade <old_grade> not found for student <id>."
+    exit 1
+
+Replace the *first occurrence* of old_grade with new_grade
+in the specified lesson's grade list.
+
+Print:
+    Grade <old_grade> changed to <new_grade> for student <id>.
+
+----------------------------------------
+3.6 delete-student <id>
+----------------------------------------
+
+If not initialized:
+    print "Not initialized. Run: python main.py init"
+    exit 1
+
+If id is not numeric:
+    print "Deleting student failed: ID must be a numeric value."
+    exit 1
+
+If student not found:
+    print "Deleting student failed: no student found with ID <id>."
+    exit 1
+
+Remove student and all associated data from data.txt.
+
+Print:
+    Student <id> and all grades deleted successfully.
+
+----------------------------------------
+3.7 list
+----------------------------------------
+
+If not initialized:
+    print "Not initialized. Run: python main.py init"
+    exit 1
+
+If no students:
+    print "Listing students failed: no student records found."
+    exit 1
+
+Output format (exactly):
+
+=== LIST OF STUDENTS ===
+
+====================
+Student ID: <id>
+Name: <name>
+Lesson <n>: <lesson> - Grades: <g1>,<g2> - Average: <avg>
+====================
+
+Each lesson is displayed on its own line with its lesson index,
+grades, and per-lesson average.
+Average displayed with exactly 2 decimal places (e.g., 50.00).
+Students listed in insertion order (file order).
+
+----------------------------------------
+3.8 report
+----------------------------------------
+
+If not initialized:
+    print "Not initialized. Run: python main.py init"
+    exit 1
+
+If no students:
+    print "Report generation failed: no student data available."
+    exit 1
+
+Generate .minigrades/report.md with markdown table format:
+
+# MINI-GRADES STUDENT REPORT
+
+| ID         | NAME            | LESSON     | GRADES   | AVERAGE    |
+|------------|-----------------|------------|----------|------------|
+| <id>       | <name>          | <lesson>   | <g1>,<g2>| <avg>      |
+
+Each lesson for a student gets its own table row.
+First row shows ID and NAME; subsequent lesson rows leave them blank.
+Average displayed with exactly 2 decimal places.
+If student has no lessons, no row is generated for that student.
+
+Print:
+    Report saved to .minigrades/report.md
+
+----------------------------------------
+3.9 student-info <id>
+----------------------------------------
+
+If not initialized:
+    print "Not initialized. Run: python main.py init"
+    exit 1
+
+If id is not numeric:
+    print "Student info retrieval failed: ID must be a numeric value."
+    exit 1
+
+If student not found:
+    print "Student info retrieval failed: no student found with ID <id>."
+    exit 1
+
+Output format (exactly):
+
+=============================
+Info for student with ID <id>:
+=============================
+Name: <name>
+Lesson: <lesson> - Grades: <g1>,<g2> - Average: <avg>
+=============================
+
+Each lesson is displayed on its own line with its grades and
+per-lesson average (2 decimal precision, e.g., 85.00).
+
+Print:
+    Student info retrieval for ID <id> completed.
+
+----------------------------------------
+3.10 clear-data
+----------------------------------------
+
+If not initialized:
+    print "Not initialized. Run: python main.py init"
+    exit 1
+
+If no students (data.txt is empty):
+    print "Clearing records failed: no student records found."
+    exit 1
+
+Confirmation prompt:
+    print "All the data is going to be deleted. Are you sure? (Y/N): "
+    Wait for user input.
+
+If user enters "y" or "yes" (case-insensitive):
+    Delete all student records from data.txt.
+    print "All the students deleted successfully."
+
+If user enters "n" or "no" (case-insensitive):
+    print "Clearing data operation cancelled."
+
+If user enters any other value:
+    print "Clearing data failed: invalid value."
+
+----------------------------------------
+3.11 clear-log
+----------------------------------------
+
+If not initialized:
+    print "Not initialized. Run: python main.py init"
+    exit 1
+
+If log.txt does not exist or is empty:
+    print "Clearing log failed: no log records found."
+    exit 1
+
+Delete all content from log.txt.
+
+Print:
+    Log cleared successfully.
+
+----------------------------------------
+3.12 help
+----------------------------------------
+
+Display a list of all available commands with descriptions.
+
+If a specific command is provided (e.g., "python main.py help add-student"):
+    Display detailed usage for that command.
+
+If the specified command is unknown:
+    print "Unknown command: <command>. Please check 'help' command for more information."
+
+========================================
+4. Error Handling
+========================================
+
+- Unknown command:
+    print "Unknown command: <command>. Please check 'help' command for more information."
+    exit 1
+
+- Missing arguments:
+    print "Usage: python main.py <command> <expected_args>"
+    exit 1
+
+========================================
+5. Determinism Rules
+========================================
+
+- No extra spaces in output
+- No debug output
+- Exact string matching required
+- Exit 0 on success, exit 1 on error
+- Grades sorted in insertion order (not sorted numerically)
+- All averages displayed with exactly 2 decimal places
+
+========================================
+END
+========================================
